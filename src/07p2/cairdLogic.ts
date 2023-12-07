@@ -39,23 +39,12 @@ const cardRanks = [
   "A",
 ];
 
-function scoreHandPossiblyWithJokers(hand: string) {
-  if (!hand.includes("J")) {
-    return scoreHand(hand);
-  } else {
-    const jIndices = [];
-    for (let i = 0; i < hand.length; i++) {
-      if (hand[i] === "J") jIndices.push(i);
-    }
-  }
-}
-
 function scoreHand(hand: string): number {
   const groups: Record<string, number> = {};
 
   for (let i = 0; i < hand.length; i++) {
     const char = hand[i];
-    if (char in groups) continue;
+    if (char === "J" || char in groups) continue;
     let total = 0;
     for (let j = 0; j < hand.length; j++) {
       if (hand[j] === char) total++;
@@ -63,28 +52,46 @@ function scoreHand(hand: string): number {
     if (total > 1) groups[char] = total;
   }
 
+  const jCount = hand.length - hand.replaceAll("J", "").length;
+
   const groupNames = Object.keys(groups);
   const groupcount = groupNames.length;
-  if (groupcount === 0) return 0; // high card
-  else if (groupcount === 1) {
-    const groupSize = groups[groupNames[0]];
-    switch (groupSize) {
+  if (groupcount === 0) {
+    switch (jCount) {
+      case 0:
+        return 0; // high card
+      case 1:
+        return 1; // 1 pair
       case 2:
-        return 1;
+        return 3; // 3 of a kind
       case 3:
-        return 3;
+        return 5; // 4 of a kind
       case 4:
-        return 5;
       case 5:
-        return 6;
+        return 6; // 5 of a kind
+    }
+    return 0; // high card
+  } else if (groupcount === 1) {
+    const groupSize = groups[groupNames[0]];
+    const withJGroupSize = groupSize + jCount;
+    switch (withJGroupSize) {
+      case 2:
+        return 1; // 1 pair
+      case 3:
+        return 3; // 3 of a kind
+      case 4:
+        return 5; // 4 of a kind
+      case 5:
+        return 6; // 5 of a kind
       default:
         throw "you messed up mate";
     }
   } else if (groupcount === 2) {
+    if (jCount > 0) return 4; // full house
     for (const card in groups) {
       if (groups[card] === 3) return 4;
     }
-    return 2;
+    return 2; // 2 pairs
   } else {
     throw "you messed up but in a different way lol";
   }
